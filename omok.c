@@ -4,6 +4,7 @@
 #include <ncurses.h>
 #include <stdlib.h>
 
+
 #define KEY_SPACE ' ' // not defined in ncurses.h
 #define KEY_Enter 10
 #define START_ROW 5
@@ -62,18 +63,13 @@ void paintBoard(int **board, WINDOW *win, int row, int col){
 		Print the board to the given WINDOW 
 		using functions of the ncurses library.
 	*/
-	initscr();
-	noecho();
-	wprintw(win,"WOW\n");
 	for(i=0;i<HEIGHT;i++){
 		for(j=0;j<WIDTH;j++){
-			addch(board[i][j]);
+			mvwaddch(win, i, j, board[i][j]);
 		}
-		printw("\n");
 	}
 	
-	endwin();
-	
+	wrefresh(win);
 	return ;
 	// TODO
 }
@@ -92,16 +88,17 @@ int Action(WINDOW *win, int **board, int keyin, int *row, int *col, int *turn, i
 	*/
 	switch(keyin){
 		case KEY_DOWN:
-			*row++;
+			(*row)++;
 			break;
 		case KEY_RIGHT:
-			*col++;
+			(*col)++;
 			break;
 		case KEY_LEFT:
-			*col--;
+			(*col)--;
 			break;
 		case KEY_UP:
-			*row--;
+			if (*row > 0)
+				(*row)--;
 			break;
 		case KEY_Enter:
 			if(*turn%2==0){
@@ -110,7 +107,9 @@ int Action(WINDOW *win, int **board, int keyin, int *row, int *col, int *turn, i
 			else if(*turn%2==1){
 				board[*row][*col]='X';
 			}
-			*turn++;			
+			(*turn)++;			
+			paintBoard(board, win, *row, *col);
+			wrefresh(win);
 			break;
 		case KEY_SPACE:
 			if(*turn%2==0){
@@ -119,12 +118,12 @@ int Action(WINDOW *win, int **board, int keyin, int *row, int *col, int *turn, i
 			else if(*turn%2==1){
 				board[*row][*col]='X';
 			}
-			*turn++;
+			(*turn)++;
+			wrefresh(win);
 			break;
 
 	}
 	move(*row,*col);
-	refresh();
 	return 0;
 	// TODO 
 }
@@ -135,9 +134,10 @@ void gameStart(WINDOW *win, int load, int players){
 	int row = 0;
 	int col = 0;
 	int keyin,turn=0;
-	wmove(win, row, col); 
 	int a=0;
+	wmove(win, row, col);
 	board = initBoard(board, &row, &col, &turn, load); // Initiating the board
+	refresh();
 
 	while(1){
 		
@@ -148,37 +148,27 @@ void gameStart(WINDOW *win, int load, int players){
 
 		// TODO LIST
 		paintBoard(board , win, row, col);  // PAINT THE BOARD
-		
-		
-		initscr();
-		noecho();
-		cbreak();
-		keypad(stdscr,TRUE);
 
-		printw("Current Turn : ");// PAINT MENU
+		mvprintw(HEIGHT + 1, 0, "Current Turn : ");// PAINT MENU
 		if(turn%players == 0){
-			printw("O\n");
+			mvprintw(HEIGHT + 2, 0, "O\n");
 		}
 		else if(turn%players == 1){
-			printw("X\n");
+			mvprintw(HEIGHT + 2, 0, "X\n");
 		}
 		else if(turn%players == 2){
-			printw("Y\n");
+			mvprintw(HEIGHT + 2, 0, "Y\n");
 		}
-		printw("1. press 1 to save\n2. Exit without save\n");
-		printw("%d %d\n",row,col);	
-		move(row,col);  // MOVE CURSOR TO THE LAST POINT 
-		refresh();
-		keyin=getch();  // GET KEYBOARD INPUT
+		mvprintw(HEIGHT + 3, 0, "1. press 1 to save\n2. Exit without save\n");
+		mvprintw(HEIGHT + 4, 0, "%d %d\n",row,col);	
+		move(row, col);
+		keyin = getch();  // GET KEYBOARD INPUT
 		Action(win,board,keyin,&row,&col,&turn,players);  // DO ACTION ACCORDING TO THAT INPUT
-		
-		wrefresh(win);
-		refresh();// update WINDOW 
-		
-		
-		
-			
+		wrefresh(win);// update WINDOW 
 	}
+
+	delwin(win);
+	endwin();
 
 	return;
 }
@@ -208,12 +198,15 @@ int main(){
 
 	// TODO LIST
 	initscr();
-	WINDOW *win = newwin(HEIGHT,WIDTH, 10, 10);  // define a window
-	endwin();
+	cbreak();
+	noecho();
+	keypad(stdscr,TRUE);
+	WINDOW *win = newwin(HEIGHT,WIDTH, 0, 0);  // define a window
 	
 	// terminate the window safely so that the terminal settings can be restored safely as well. 
 
 	gameStart(win, nload, players); 
 
+	endwin();
 	return 0;
 }
