@@ -21,7 +21,7 @@ void saveGame(int **board, int row, int col, int turn){
 	echo();
 	mvprintw(row+5,col+5,"ENTER FILE NAME : ");
 	scanw("%s",&f_name);
-	noecho();	
+	
 	savefile=fopen(f_name,"w");
 	fprintf(savefile,"%d %d %d ",row,col,turn);
 	for(int i=0;i<HEIGHT;i++){
@@ -43,11 +43,8 @@ int** readSavedGame(int **board, int *row, int *col, int *turn){
 	int r,c,t;
 
 	echo();
-	
 	printw("ENTER FILE NAME : ");
 	scanw("%s",&f_name);
-	
-	noecho();
 	
 	readfile=fopen(f_name,"r");
 	fscanf(readfile,"%d %d %d",&r,&c,&t);
@@ -57,9 +54,6 @@ int** readSavedGame(int **board, int *row, int *col, int *turn){
 		}
 	}
 	fclose(readfile);
-	
-	refresh();
-	endwin();
 	(*row)=r;
 	(*col)=c;
 	(*turn)=t;
@@ -155,10 +149,67 @@ int checkWin(int row,int col,int **board,int players){ // parameters and return 
 						x++;
 					}
 				}
-				if(i==fin_num) return 1;
+			if(i==fin_num) return 1;
 			}
 		}
 	}
+
+	/*for(i=1;i<5;i++){
+		if(board[row][col]==board[row+i][col]){
+			continue;
+		}
+		else break;
+	}
+	if(i==5) return 1;
+
+	for(i=1;i<5;i++){
+		if(board[row][col]==board[row][col-i]){
+			continue;
+		}
+		else break;
+	}
+	if(i==5) return 1;
+
+	for(i=1;i<5;i++){
+		if(board[row][col]==board[row][col+i]){
+			continue;
+		}
+		else break;
+	}
+	if(i==5) return 1;
+
+	for(i=1;i<5;i++){
+		if(board[row][col]==board[row-i][col-i]){
+			continue;
+		}
+		else break;
+	}
+	if(i==5) return 1;
+
+	for(i=1;i<5;i++){
+		if(board[row][col]==board[row+i][col+i]){
+			continue;
+		}
+		else break;
+	}
+	if(i==5) return 1;
+
+	for(i=1;i<5;i++){
+		if(board[row][col]==board[row-i][col+i]){
+			continue;
+		}
+		else break;
+	}
+	if(i==5) return 1;
+
+	for(i=1;i<5;i++){
+		if(board[row][col]==board[row+i][col-i]){
+			continue;
+		}
+		else break;
+	}
+	if(i==5) return 1;*/
+
 	return 0;
 	// TODO
 	
@@ -198,6 +249,21 @@ int Action(WINDOW *win, int **board, int keyin, int *row, int *col, int *turn, i
 			(*save)=2;
 			break;
 		case KEY_Enter:
+			/*if(board[*row][*col] == 'O' || board[*row][*col] == 'X' || board[*row][*col] == 'Y'){
+				break;
+			}
+			if((*turn) % players == 0){
+				board[*row][*col]='O';
+			}
+			else if((*turn) % players == 1){
+				board[*row][*col]='X';
+			}
+			else if((*turn) % players == 2){
+				board[*row][*col]='Y';
+			}
+			(*turn)++;
+			result=checkWin(*row,*col,board,players);
+			break;*/
 		case KEY_SPACE:
 			if(board[*row][*col] == 'O' || board[*row][*col] == 'X'|| board[*row][*col] == 'Y'){
 				break;
@@ -233,7 +299,7 @@ void gameStart(WINDOW *win, int load, int players){
 	board = initBoard(board, &row, &col, &turn, load); // Initiating the board
 	if(load==1){
 		board = readSavedGame(board,&row,&col,&turn);
-	}
+	}	
 	while(1){
 		
 		/* 
@@ -242,27 +308,28 @@ void gameStart(WINDOW *win, int load, int players){
 		*/
 
 		// TODO LIST
+		noecho();
 		paintBoard(board , win, row, col);  // PAINT THE BOARD
 
+		mvprintw(HEIGHT + 8, 8, "Current Turn : ");// PAINT MENU
 		if(turn%players == 0){
-			mvprintw(HEIGHT + 8+load,8 ,"Current Turn : O\n");
+			printw("O\n");
 		}
 		else if(turn%players == 1){
-			mvprintw(HEIGHT+8+load,8,"Current Turn : X\n");
+			printw("X\n");
 		}
 		else if(turn%players == 2){
-			mvprintw(HEIGHT+8+load,8,"Current Turn : Y\n");
+			printw("Y\n");
 		}
-		mvprintw(HEIGHT+9+load,8,"1. press 1 to save");
-		mvprintw(HEIGHT+10+load,8,"2. Exit without save\n");
+		mvprintw(HEIGHT+9,8,"1. press 1 to save");
+		mvprintw(HEIGHT+10,8,"2. Exit without save\n");
 		
 		move(row+5, col+5);
-	
 		keyin = getch();  // GET KEYBOARD INPUT
-
-		if(Action(win,board,keyin,&row,&col,&turn,players,&save)==1){
+		result=Action(win,board,keyin,&row,&col,&turn,players,&save);
+		if(result==1){
 			paintBoard(board,win,row,col);
-			mvprintw(HEIGHT+7+load,8,"PLAYER%d WIN !! Press any button to terminate the program",turn%players+1);
+			mvprintw(HEIGHT+7 ,8,"PLAYER%d WIN !! Press any button to terminate the program",turn%players+1);
 			getch();
 			wrefresh(win);
 			break;
